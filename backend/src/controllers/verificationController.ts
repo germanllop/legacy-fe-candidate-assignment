@@ -9,5 +9,7 @@ export const verifySignature = (req: Request, res: Response, next: NextFunction)
     const { message, signature } = verifySignatureSchema.parse(body);
 
     const result = verificationService.verifySignature({message, signature});
-    return res.status(200).json(result);
+    res.status(200).json(result);
+
+    next();
 };
