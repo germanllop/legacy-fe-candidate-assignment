@@ -1,77 +1,22 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
 import { SignedMessageList } from "@/components/signed-message-list";
 import type { FormEvent } from "react";
-import type { SignedMessageItemProps } from "@/components/signed-message-item";
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
-import type { AddressLike } from "ethers";
-
-type SignatureResult = {
-  isValid: boolean;
-  signer: AddressLike | null;
-  originalMessage: string;
-};
+import { useSignedMessages } from "@/hooks/useSignedMessages";
+import { verifySignature } from "@/lib/api/signature";
+import type { SignatureResult } from "@/types/signature";
 
 const MAX_MESSAGE_LENGTH = 256;
-const STORAGE_KEY = "signedMessages";
-
-type StoredMessages = Record<string, SignedMessageItemProps[]>;
-
-const getStoredMessages = (): StoredMessages => {
-  if (typeof window === "undefined") {
-    return {};
-  }
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as StoredMessages) : {};
-  } catch (error) {
-    console.error("Failed to parse stored messages", error);
-    return {};
-  }
-};
-
-const setStoredMessages = (value: StoredMessages) => {
-  if (typeof window === "undefined") {
-    return;
-  }
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-  } catch (error) {
-    console.error("Failed to persist messages", error);
-  }
-};
 
 const SignMessage = () => {
   const isLoggedIn = useIsLoggedIn();
   const { primaryWallet } = useDynamicContext();
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<SignedMessageItemProps[]>([]);
   const [status, setStatus] = useState<"idle" | "signing">("idle");
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const address = primaryWallet?.address?.toLowerCase();
-    if (!address) {
-      setMessages([]);
-      return;
-    }
-
-    const stored = getStoredMessages();
-    setMessages(stored[address] ?? []);
-  }, [primaryWallet?.address]);
-
-  const visibleMessages = useMemo(() => {
-    const currentAddress = primaryWallet?.address?.toLowerCase();
-    if (!currentAddress) {
-      return [];
-    }
-    return messages.filter(
-      (signedMessage) =>
-        signedMessage.signer.toLowerCase() === currentAddress
-    );
-  }, [messages, primaryWallet?.address]);
+  const { messages, addMessage } = useSignedMessages(primaryWallet?.address);
 
   if (!isLoggedIn || !primaryWallet) {
     return null;
@@ -106,25 +51,10 @@ const SignMessage = () => {
         throw new Error("Wallet failed to produce a signature.");
       }
 
-      const response = await fetch(
-        `${apiBaseUrl}/api/verify-signature`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: trimmedMessage,
-            signature,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to verify signature");
-      }
-
-      const result = (await response.json()) as SignatureResult;
+      const result: SignatureResult = await verifySignature(apiBaseUrl, {
+        message: trimmedMessage,
+        signature,
+      });
 
       if (!result.isValid) {
         setError("Signature is not valid.");
@@ -140,27 +70,11 @@ const SignMessage = () => {
         return primaryWallet.address ?? "Unknown signer";
       })();
 
-      setMessages((prev) => {
-        const updated: SignedMessageItemProps[] = [
-          {
-            message: result.originalMessage,
-            signature,
-            signer: resolvedSigner,
-            isValid: true,
-          },
-          ...prev,
-        ];
-
-        const addressKey = primaryWallet.address?.toLowerCase();
-        if (addressKey) {
-          const stored = getStoredMessages();
-          setStoredMessages({
-            ...stored,
-            [addressKey]: updated,
-          });
-        }
-
-        return updated;
+      addMessage({
+        message: result.originalMessage,
+        signature,
+        signer: resolvedSigner,
+        isValid: true,
       });
       setMessage("");
     } catch (err) {
@@ -209,8 +123,8 @@ const SignMessage = () => {
 
       <div>
         <h3 className="mb-2 text-base font-semibold">Validated messages</h3>
-        {visibleMessages.length > 0 ? (
-          <SignedMessageList messages={visibleMessages} />
+        {messages.length > 0 ? (
+          <SignedMessageList messages={messages} />
         ) : (
           <p className="text-sm text-muted-foreground">
             No verified messages for this wallet yet.

@@ -1,7 +1,8 @@
-import type { SignedMessageItemProps } from "@/components/signed-message-item";
 import { SignedMessageItem } from "@/components/signed-message-item";
+import type { SignedMessage } from "@/types/signature";
+
 interface SignedMessageListProps {
-    messages: SignedMessageItemProps[]
+  messages: SignedMessage[];
 }
 
 const SignedMessageList = ({ messages }: SignedMessageListProps) => {

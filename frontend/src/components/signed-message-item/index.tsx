@@ -7,13 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import type { SignedMessage } from "@/types/signature";
 
-export interface SignedMessageItemProps {
-  message: string;
-  signer: string;
-  isValid: boolean;
-  signature: string;
-}
+export type SignedMessageItemProps = SignedMessage;
 
 const SignedMessageItem = ({
   message,

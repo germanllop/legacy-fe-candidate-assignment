@@ -8,107 +8,42 @@ import {
 } from "@dynamic-labs/sdk-react-core";
 import { WalletProfile } from "../wallet-profile";
 import { SignMessage } from "../sign-message";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import type { FormEvent } from "react";
-
-type LoginStep = "email" | "otp";
+import { useOtpLogin } from "@/hooks/useOtpLogin";
 
 const ConnectWallet = () => {
   const isLoggedIn = useIsLoggedIn();
   const { connectWithEmail, verifyOneTimePassword, retryOneTimePassword } =
     useConnectWithOtp();
-  const [loginStep, setLoginStep] = useState<LoginStep>("email");
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "sending" | "verifying" | "resending"
-  >("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const {
+    state: { loginStep, status, error, infoMessage },
+    email,
+    setEmail,
+    otp,
+    setOtp,
+    actions: { submitEmail, verifyOtp, resendCode, editEmail, resetFlow },
+  } = useOtpLogin({
+    connectWithEmail,
+    verifyOneTimePassword,
+    retryOneTimePassword,
+  });
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      return;
+    if (isLoggedIn) {
+      resetFlow();
     }
-    setLoginStep("email");
-    setEmail("");
-    setOtp("");
-    setStatus("idle");
-    setError(null);
-    setMessage(null);
-  }, [isLoggedIn]);
+  }, [isLoggedIn, resetFlow]);
 
-  const handleSendEmail = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSendEmail = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setError("Please enter a valid email address.");
-      return;
-    }
-
-    try {
-      setStatus("sending");
-      setError(null);
-      setEmail(trimmedEmail);
-      await connectWithEmail(trimmedEmail);
-      setLoginStep("otp");
-      setMessage(`We sent a one-time code to ${trimmedEmail}.`);
-    } catch (err) {
-      const reason =
-        err instanceof Error ? err.message : "Unable to start the login flow.";
-      setError(reason);
-    } finally {
-      setStatus("idle");
-    }
+    submitEmail();
   };
 
-  const handleVerifyOtp = async (event: FormEvent<HTMLFormElement>) => {
+  const handleVerifyOtp = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const trimmedOtp = otp.trim();
-    if (!trimmedOtp) {
-      setError("Enter the code you received by email.");
-      return;
-    }
-
-    try {
-      setStatus("verifying");
-      setError(null);
-      await verifyOneTimePassword(trimmedOtp);
-      setMessage("Code verified. Finalizing sign-in...");
-    } catch (err) {
-      const reason =
-        err instanceof Error
-          ? err.message
-          : "Verification failed. Double-check the code and try again.";
-      setError(reason);
-    } finally {
-      setStatus("idle");
-    }
-  };
-
-  const handleResendCode = async () => {
-    try {
-      setStatus("resending");
-      setError(null);
-      await retryOneTimePassword();
-      setMessage(`Sent a new code to ${email}.`);
-    } catch (err) {
-      const reason =
-        err instanceof Error
-          ? err.message
-          : "Unable to resend the code. Please try again shortly.";
-      setError(reason);
-    } finally {
-      setStatus("idle");
-    }
-  };
-
-  const handleEditEmail = () => {
-    setLoginStep("email");
-    setOtp("");
-    setMessage(null);
-    setError(null);
+    verifyOtp();
   };
 
   const isSending = status === "sending";
@@ -169,7 +104,7 @@ const ConnectWallet = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={handleEditEmail}
+                    onClick={editEmail}
                   >
                     Edit email
                   </Button>
@@ -178,7 +113,7 @@ const ConnectWallet = () => {
                   type="button"
                   variant="ghost"
                   className="w-full"
-                  onClick={handleResendCode}
+                  onClick={resendCode}
                   disabled={isResending}
                 >
                   {isResending ? "Sending another code..." : "Resend code"}
@@ -192,8 +127,8 @@ const ConnectWallet = () => {
               {error}
             </p>
           )}
-          {message && !error && (
-            <p className="mt-4 text-sm text-muted-foreground">{message}</p>
+          {infoMessage && !error && (
+            <p className="mt-4 text-sm text-muted-foreground">{infoMessage}</p>
           )}
         </div>
       ) : (
