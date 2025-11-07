@@ -15,9 +15,11 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "express": "^5.1.0",

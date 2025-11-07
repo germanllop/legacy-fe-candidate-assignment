@@ -1,9 +1,14 @@
 import express from 'express';
+import cors from 'cors';
 import routes from './routes';
 import { errorHandler } from './middlewares/errorHandler';
+import config from './config';
 
 const app = express();
 
+app.use(cors({
+    origin: config.corsOrigin,
+}));
 app.use(express.json());
 
 // Routes
