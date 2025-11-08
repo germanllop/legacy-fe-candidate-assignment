@@ -7,6 +7,7 @@ import {
   clearMessagesForWallet,
 } from "@/lib/storage";
 
+// Bridge between React state and localStorage so each wallet retains its own history
 export const useSignedMessages = (walletAddress?: string) => {
   const [messages, setMessages] = useState<SignedMessage[]>([]);
 

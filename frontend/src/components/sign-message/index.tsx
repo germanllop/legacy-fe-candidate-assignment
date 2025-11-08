@@ -10,12 +10,14 @@ import type { SignatureResult } from "@/types/signature";
 
 const MAX_MESSAGE_LENGTH = 256;
 
+// This component stays lean because signing + persistence live in hooks/services
 const SignMessage = () => {
   const isLoggedIn = useIsLoggedIn();
   const { primaryWallet } = useDynamicContext();
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<"idle" | "signing">("idle");
   const [error, setError] = useState<string | null>(null);
+  // Persist per-wallet history in localStorage via a hook so re-logins replay past signatures
   const { messages, addMessage } = useSignedMessages(primaryWallet?.address);
 
   if (!isLoggedIn || !primaryWallet) {
@@ -45,6 +47,7 @@ const SignMessage = () => {
         throw new Error("Active wallet does not support message signing.");
       }
 
+      // Signing is delegated to Dynamic's wallet instance; no direct window provider access needed
       const signature = await primaryWallet.signMessage(trimmedMessage);
 
       if (!signature) {

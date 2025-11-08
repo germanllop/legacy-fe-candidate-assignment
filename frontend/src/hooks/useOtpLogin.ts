@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
 
+// Encapsulates the OTP login flow so UI components can rely on a single hook for state + actions
+
 export type LoginStep = "email" | "otp";
 export type LoginStatus = "idle" | "sending" | "verifying" | "resending";
 

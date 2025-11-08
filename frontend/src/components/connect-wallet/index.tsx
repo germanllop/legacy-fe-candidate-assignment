@@ -17,6 +17,7 @@ const ConnectWallet = () => {
   const isLoggedIn = useIsLoggedIn();
   const { connectWithEmail, verifyOneTimePassword, retryOneTimePassword } =
     useConnectWithOtp();
+  // The OTP state machine lives in a custom hook so we can test it separately
   const {
     state: { loginStep, status, error, infoMessage },
     email,
@@ -54,6 +55,7 @@ const ConnectWallet = () => {
     <div className="flex flex-col items-center justify-center">
       {!isLoggedIn ? (
         <div className="w-full max-w-md">
+          {/* Render email or OTP forms based on the hook-managed step */}
           {loginStep === "email" && (
             <form onSubmit={handleSendEmail}>
               <FieldGroup>

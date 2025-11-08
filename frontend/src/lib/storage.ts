@@ -1,5 +1,7 @@
 import type { SignedMessage } from "@/types/signature";
 
+// Minimal storage helpers keep persistence logic isolated if we later swap localStorage out
+
 const SIGNED_MESSAGES_KEY = "signedMessages";
 
 type SignedMessageStore = Record<string, SignedMessage[]>;

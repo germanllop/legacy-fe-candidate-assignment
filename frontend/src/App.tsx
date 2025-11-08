@@ -4,6 +4,7 @@ import { Home } from "./pages/home";
 
 function App() {
   return (
+    // DynamicContextProvider bootstraps the SDK so nested pages can focus on features
     <DynamicContextProvider
       settings={{
         environmentId:import.meta.env.VITE_DYNAMIC_XYZ_ID,
