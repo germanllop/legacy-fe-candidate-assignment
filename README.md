@@ -1,64 +1,71 @@
-# Take-Home Task: **Web3 Message Signer & Verifier**
-React + Dynamic.xyz Headless Implementation (Frontend) | Node.js + Express (Backend)
+# Web3 Message Signer & Verifier
 
-## 🎯 Objective
-Build a full-stack Web3 app that allows a user to:
-1. Authenticate using a **Dynamic.xyz embedded wallet headless implementation https://docs.dynamic.xyz/headless/headless-email** ⚠️ Do not simply implement the Widget ⚠️
-2. Enter and **sign a custom message** of the user's choosing
-3. Send the signed message to a **Node.js + Express** backend
-4. Backend verifies the signature and responds with validity + address
+This repository contains a Dynamic.xyz headless authentication demo with a React + Vite frontend and an Express + TypeScript backend. Users sign in via email OTP, sign arbitrary messages with their Dynamic-connected wallet, and the backend verifies the signature with `ethers`. Prior signatures persist locally per wallet address.
 
-## 🔧 Requirements
+## Project Highlights
+- **Headless Dynamic flow**: OTP login implemented via the SDK hooks only; no hosted widget UI is shown unless the wallet itself requires approval.
+- **Message verification service**: Backend exposes a single `/api/verify-signature` endpoint that recovers the signer and reports validity.
+- **Local history**: Each wallet’s signed-and-verified messages are cached in `localStorage` and replayed after reconnecting.
+- **Testable architecture**: Complex bits (OTP flow, storage, signing) are wrapped in hooks/services so behavior can be unit tested without rendering the full UI.
 
-### 🧩 Frontend (React 18+)
-* Integrate Dynamic.xyz Embedded Wallet
-* After authentication:
-   * Show connected wallet address
-   * Provide a form to input a custom message
-   * Let user sign the message
-   * Submit `{ message, signature }` to backend
-* Show result from backend:
-   * Whether the signature is valid
-   * Which wallet signed it
-* Allow signing multiple messages (show a local history)
+## Tech Stack
+- **Frontend**: Vite, React 19, TypeScript, shadcn/ui, Dynamic SDK, Testing Library + Vitest.
+- **Backend**: Express, TypeScript, `ethers` for recovery, Zod for validation.
 
-**Note:** How you structure the React app is up to you — but the app complexity is high enough that good React patterns will shine through.
+## Getting Started
 
-### 🌐 Backend (Node.js + Express – required)
-* Create a REST API endpoint: `POST /verify-signature`
-* Accept:
-```json
-{ "message": "string", "signature": "string" }
+### Backend
+```bash
+cd backend
+npm install
+npm run dev
+# production build
+npm run build
+npm start
 ```
-* Use `ethers.js` (or `viem`) to:
-   * Recover the signer from the signature
-   * Validate the signature
-* Return:
-```json
-{ "isValid": true, "signer": "0xabc123...", "originalMessage": "..." }
+The API listens on `http://localhost:3000` by default. Configure credentials via `backend/.env` if needed.
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+# production build
+npm run build
+npm run preview
+```
+Create `frontend/.env` (see `.env.example`) and point `VITE_DYNAMIC_XYZ_ID` plus `VITE_API_URL` at your Dynamic project and local API.
+
+## Testing
+
+### Frontend
+Tests live alongside the source they cover. From `frontend/` run:
+```bash
+npm run test
+```
+Coverage includes:
+- `shortWalletAddress` utility guards (only accepts 42-char addresses).
+- Storage helpers for per-wallet history (`src/lib/storage.ts`).
+- `useOtpLogin` and `useSignedMessages` hooks.
+- Integration-style specs for `SignMessage` and `ConnectWallet` components using mocked Dynamic hooks.
+
+### Backend
+Jest unit tests cover the verification controller/service (`backend/tests/*`). From `backend/` run:
+```bash
+npm run test
 ```
 
-## Behavior & Constraints
-* Session state can be in-memory (no DB required)
-* Message signing history should persist across React component state or localStorage
-* No third-party signature validation services — use raw `ethers.js`, `viem` or similar in backend
+## Design & Architectural Notes
+- **Headless-first**: Authentication is driven via Dynamic hooks (`useConnectWithOtp`, `useIsLoggedIn`). Wallet signing leverages `primaryWallet.signMessage` so everything stays headless except for unavoidable wallet prompts.
+- **Logic isolation**: OTP and signing flows were moved into hooks (`useOtpLogin`, `useSignedMessages`) to simplify testing and allow future screens to reuse the same state machines.
+- **Persistence trade-off**: For this scope, `localStorage` is enough to maintain per-wallet histories. If multiple providers or contexts are needed later, introducing a small storage abstraction (e.g., Zustand, jotai, or even IndexedDB via Dexie) would avoid re-implementing serialization.
+- **API client separation**: `src/lib/api/signature.ts` keeps fetch logic out of components, so migrating to Axios or a typed client later won’t touch the UI layer.
 
-## 🚀 Submission Guidelines
-* Submit a **PR to the GitHub repo**
-* Include:
-   * Setup instructions for both frontend and backend in a README.md file
-   * Notes on any trade-offs made or areas you'd improve
-   * A test suite with all tests passing
-* Bonus: Implement headless **multi-factor auth** to seucre the user https://docs.dynamic.xyz/headless/headless-mfa
-* Bonus: Link to deployed version (e.g., Vercel frontend, Render backend)
+## Potential Improvements
+- **Richer storage layer**: Swap the simple helper for a dedicated storage library to support syncing across tabs, encryption, or multiple Dynamic contexts/providers.
+- **Multi-wallet support**: Promote `useSignedMessages` into a context that can handle multiple connected wallets simultaneously (Dynamic allows multi-wallet sessions).
+- **Server persistence**: If shared history is required, add a database and move the storage boundary behind an API, keeping the current hook signatures intact.
+- **E2E coverage**: Add a Playwright smoke test that drives the full login/sign/verify flow against a mocked backend for extra safety.
+- **Security hardening**: Implement headless MFA and rate limiting on the verification endpoint if this evolves beyond a demo.
 
-## ✅ Evaluation Focus
-| Area | Evaluated On |
-|------|-------------|
-| **React architecture** | Component design, state flow, hooks, separation of concerns |
-| **Dynamic.xyz usage** | Clean login, wallet context management, signing flow |
-| **Node.js + Express** | REST API correctness, signature validation logic, modularity |
-| **Code quality** | Readability, organization, error handling, TypeScript use |
-| **User experience** | Clear flows, responsive feedback, intuitive UI |
-| **Extensibility** | Evidence of scalable thought (e.g., room for auth, roles, message types) |
-| **Design** | Beautiful UX design skills are important to us. Make the app look and feel great |
+This setup aims to stay approachable while still demonstrating production-minded patterns—clean separation, typed APIs, and a test suite that proves the critical paths.
