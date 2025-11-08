@@ -10,7 +10,13 @@ This repository contains a Dynamic.xyz headless authentication demo with a React
 
 ## Tech Stack
 - **Frontend**: Vite, React 19, TypeScript, shadcn/ui, Dynamic SDK, Testing Library + Vitest.
-- **Backend**: Express, TypeScript, `ethers` for recovery, Zod for validation.
+- **Backend**: Express, TypeScript, `ethers` for recovery, Zod for validation and Jest for unit testing.
+
+## FRONTEND DEMO URL
+[https://assignment-frontend-app-sf7gf.ondigitalocean.app/](https://assignment-frontend-app-sf7gf.ondigitalocean.app/)
+
+## BACKEND DEMO API URL
+[https://assignment-backend-app-8qlf4.ondigitalocean.app/](https://assignment-backend-app-8qlf4.ondigitalocean.app/)
 
 ## Getting Started
 
