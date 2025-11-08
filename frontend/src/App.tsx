@@ -1,9 +1,6 @@
-import { Header } from "./components/header"
-import { Hero } from "./components/hero"
-import { ConnectWallet } from "./components/connect-wallet"
-
 import { EthereumWalletConnectors } from '@dynamic-labs/ethereum';
 import { DynamicContextProvider } from '@dynamic-labs/sdk-react-core';
+import { Home } from "./pages/home";
 
 function App() {
   return (
@@ -13,11 +10,7 @@ function App() {
         walletConnectors:[EthereumWalletConnectors]
       }}
     >
-      <div className="w-full min-h-screen container mx-auto px-4 py-4">
-        <Header githubLink="https://github.com/germanllop/legacy-fe-candidate-assignment" />
-        <Hero />
-        <ConnectWallet />
-      </div>
+      <Home />
     </DynamicContextProvider>
   )
 }
